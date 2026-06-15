@@ -55,15 +55,15 @@ export function AppShell({ nav, sidebar, main }: AppShellProps) {
       )}
       
       {/* Main viewport with the ChatGPT style bottom search/chat bar */}
-      <div className="relative flex flex-col h-full overflow-hidden bg-base">
+      <div className="flex flex-col h-full overflow-hidden bg-base">
         {/* Actual page content wrapper */}
-        <div className="flex-1 overflow-y-auto pb-32">
+        <div className="flex-1 overflow-y-auto relative">
           {main}
         </div>
 
         {/* Global ChatGPT-style bottom type bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-base via-base/90 to-transparent pointer-events-none z-30 flex flex-col items-center">
-          <div className="w-full max-w-2xl pointer-events-auto flex flex-col gap-2 relative">
+        <div className="w-full p-6 bg-base border-t border-border z-30 flex flex-col items-center">
+          <div className="w-full max-w-2xl flex flex-col gap-2 relative">
             
             {/* Slide-up Chat History */}
             <AnimatePresence>

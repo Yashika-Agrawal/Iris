@@ -23,11 +23,11 @@ export function ThreadRow({ thread, isSelected, onSelect }: ThreadRowProps) {
       </div>
       <div className="flex items-center gap-2">
         <PriorityDot priority={thread.priority} />
-        <span className={`text-sm truncate ${thread.isUnread ? 'text-primary font-medium' : 'text-secondary'}`}>
-          {thread.subject}
+        <span className={`text-sm truncate ${thread?.isUnread ? 'text-primary font-medium' : 'text-secondary'}`}>
+          {thread?.subject}
         </span>
       </div>
-      <span className="text-xs text-muted truncate">{thread.preview}</span>
+      <span className="text-xs text-muted truncate">{thread?.preview}</span>
     </button>
   );
 }

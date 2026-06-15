@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { corsair } from '../../../../../lib/corsair';
+import { corsair, pool } from '../../../../../lib/corsair';
 import { getTenantId } from '../../../../../lib/tenant';
 import { Thread, Message, Priority } from '../../../../../types';
 
@@ -9,8 +9,47 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const tenantId = await getTenantId();
-    const tenant = corsair.withTenant(tenantId);
+    
+    const dbRes = await pool.query(
+      `SELECT data FROM corsair_entities WHERE entity_type = 'threads' AND entity_id = $1 LIMIT 1`,
+      [id]
+    );
+
+    let threadData = dbRes.rows[0]?.data;
+    let tenant;
+    
+    // Fallback if not in cache yet
+    if (!threadData) {
+      const tenantId = await getTenantId();
+      tenant = corsair.withTenant(tenantId);
+      threadData = await tenant.gmail.api.threads.get({ id, userId: 'me', format: 'full' });
+    } else {
+      // Fetch messages for this thread from cache
+      const msgRes = await pool.query(
+        `SELECT data FROM corsair_entities WHERE entity_type = 'messages' AND data->>'threadId' = $1 ORDER BY data->>'internalDate' ASC`,
+        [id]
+      );
+      threadData.messages = msgRes.rows.map((r: any) => r.data);
+      if (threadData.messages.length > 0) {
+        const lastMsg = threadData.messages[threadData.messages.length - 1];
+        if (lastMsg.snippet) {
+          threadData.snippet = lastMsg.snippet;
+        }
+      }
+    }
+
+    // Fallback to API if we got the thread from cache but messages are missing
+    if (threadData && (!threadData.messages || threadData.messages.length === 0)) {
+      if (!tenant) {
+        const tenantId = await getTenantId();
+        tenant = corsair.withTenant(tenantId);
+      }
+      try {
+        threadData = await tenant.gmail.api.threads.get({ id, userId: 'me', format: 'full' });
+      } catch (e) {
+        console.error(`Failed to fallback fetch full thread ${id}`, e);
+      }
+    }
 
     if (id === 'thread-demo') {
       const thread: Thread = {
@@ -65,9 +104,9 @@ export async function GET(
       return NextResponse.json({ thread, messages });
     }
 
-    const response = await tenant.gmail.api.threads.get({ id });
+    // response is already fetched above
 
-    const messagesList = response.messages || [];
+    const messagesList = threadData.messages || [];
     const firstMessage = messagesList[0] || {};
     const firstPayload = firstMessage.payload || {};
     const firstHeaders = firstPayload.headers || [];
@@ -76,6 +115,8 @@ export async function GET(
     const isUnread = messagesList.some((m: any) => m.labelIds?.includes('UNREAD'));
     if (isUnread) {
       try {
+        const tenantId = await getTenantId();
+        const tenant = corsair.withTenant(tenantId);
         await tenant.gmail.api.threads.modify({
           id,
           userId: 'me',
@@ -87,8 +128,8 @@ export async function GET(
     }
 
 
-    const fromHeader = firstHeaders.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown';
-    const subjectHeader = firstHeaders.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
+    const fromHeader = firstMessage.from || firstHeaders.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown';
+    const subjectHeader = firstMessage.subject || firstHeaders.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
     const dateHeader = firstHeaders.find((h: any) => h.name.toLowerCase() === 'date')?.value || new Date().toISOString();
 
     let from = fromHeader;
@@ -108,7 +149,7 @@ export async function GET(
       return acc;
     }, []);
 
-    let body = response.snippet || '';
+    let body = threadData.snippet || '';
     if (firstPayload.body?.data) {
       body = Buffer.from(firstPayload.body.data, 'base64').toString('utf-8');
     } else if (firstPayload.parts) {
@@ -131,11 +172,11 @@ export async function GET(
     }
 
     const thread: Thread = {
-      id: response.id || '',
+      id: threadData.id || '',
       from,
       fromEmail,
       subject: subjectHeader,
-      preview: response.snippet || '',
+      preview: threadData.snippet || '',
       body,
       date: dateHeader,
       isUnread,

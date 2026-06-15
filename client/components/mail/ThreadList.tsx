@@ -3,6 +3,7 @@ import { ThreadRow } from './ThreadRow';
 import { useThreads } from '../../lib/hooks/useThreads';
 import { useParams, useRouter } from 'next/navigation';
 import { FollowUpTracker } from './FollowUpTracker';
+import { Loader } from '../ui/Loader';
 
 export function ThreadList() {
   const { threads, isLoading } = useThreads();
@@ -12,7 +13,7 @@ export function ThreadList() {
   const selectedId = params?.threadId as string | undefined;
 
   if (isLoading) {
-    return <div className="p-4 text-secondary text-sm font-mono">Loading threads...</div>;
+    return <Loader label="Loading Threads..." sublabel="" />;
   }
 
   return (

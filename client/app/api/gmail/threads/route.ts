@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { corsair } from '../../../../lib/corsair';
+export const dynamic = 'force-dynamic';
+import { corsair, pool } from '../../../../lib/corsair';
 import { getTenantId } from '../../../../lib/tenant';
 import { Thread, Priority } from '../../../../types';
 
@@ -9,24 +10,62 @@ export async function GET() {
     const tenant = corsair.withTenant(tenantId);
     const response = await tenant.gmail.api.threads.list({
       userId: 'me',
-      maxResults: 10
+      maxResults: 10,
+      q: 'in:inbox'
     });
 
     const threadsList = response.threads || [];
-    const detailedThreads = await Promise.all(
-      threadsList.map(async (t: any) => {
-        try {
-          return await tenant.gmail.api.threads.get({
-            id: t.id,
-            userId: 'me',
-            format: 'full'
-          });
-        } catch (e) {
-          console.warn(`Failed to fetch details for thread ${t.id}:`, e);
-          return t;
+    const threadIds = threadsList.map((t: any) => t.id);
+    
+    let detailedThreads = [];
+    if (threadIds.length > 0) {
+      const placeholders = threadIds.map((_: any, i: number) => `$${i + 1}`).join(',');
+      
+      // Fetch threads
+      const dbRes = await pool.query(
+        `SELECT data FROM corsair_entities WHERE entity_type = 'threads' AND entity_id IN (${placeholders})`,
+        threadIds
+      );
+      
+      // Fetch all messages belonging to these threads
+      const msgRes = await pool.query(
+        `SELECT data FROM corsair_entities WHERE entity_type = 'messages' AND data->>'threadId' IN (${placeholders}) ORDER BY data->>'internalDate' ASC`,
+        threadIds
+      );
+      
+      // Group messages by thread
+      const messagesByThread: Record<string, any[]> = {};
+      msgRes.rows.forEach((r: any) => {
+        const tId = r.data.threadId;
+        if (!messagesByThread[tId]) messagesByThread[tId] = [];
+        messagesByThread[tId].push(r.data);
+      });
+
+      detailedThreads = await Promise.all(threadIds.map(async (id: string) => {
+        let threadData = dbRes.rows.find((r: any) => r.data.id === id)?.data;
+        
+        if (threadData) {
+          threadData.messages = messagesByThread[id] || [];
+          const lastMsg = threadData.messages[threadData.messages.length - 1];
+          if (lastMsg && lastMsg.snippet) {
+            threadData.snippet = lastMsg.snippet;
+          }
         }
-      })
-    );
+        
+        // Fallback to API if not in cache or missing messages
+        if (!threadData || !threadData.messages || threadData.messages.length === 0) {
+          try {
+            threadData = await tenant.gmail.api.threads.get({ id, userId: 'me', format: 'full' });
+          } catch (e) {
+            console.error(`Failed to fallback fetch thread ${id}`, e);
+          }
+        }
+        
+        return threadData;
+      }));
+      
+      detailedThreads = detailedThreads.filter(Boolean);
+    }
 
     const formatted: Thread[] = detailedThreads.map((t: any) => {
       const messages = t.messages || [];
@@ -35,9 +74,8 @@ export async function GET() {
       const headers = payload.headers || [];
 
       // Extract headers
-      const fromHeader = headers.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown';
-
-      const subjectHeader = headers.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
+      const fromHeader = firstMessage.from || headers.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown';
+      const subjectHeader = firstMessage.subject || headers.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
       const dateHeader = headers.find((h: any) => h.name.toLowerCase() === 'date')?.value || new Date().toISOString();
 
       let from = fromHeader;

@@ -7,11 +7,15 @@ import { github } from '@corsair-dev/github';
 import { gmail } from '@corsair-dev/gmail';
 import { googlecalendar } from '@corsair-dev/googlecalendar';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool);
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool);
 
 export const corsair = createCorsair({
-    plugins: [github(), gmail(), googlecalendar()],
+    plugins: [
+      github(), 
+      gmail({ topicId: process.env.GOOGLE_PUBSUB_TOPIC }), 
+      googlecalendar()
+    ],
     database: pool,
     kek: process.env.CORSAIR_KEK!,
     multiTenancy: true,

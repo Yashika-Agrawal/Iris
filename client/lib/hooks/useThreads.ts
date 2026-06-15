@@ -12,6 +12,7 @@ export function useThreads() {
 
   useEffect(() => {
     async function loadThreads() {
+      setIsLoading(true);
       try {
         const data = await listThreads();
         setThreads(data);
@@ -23,6 +24,25 @@ export function useThreads() {
     }
 
     loadThreads();
+
+    const handleRefresh = () => {
+      loadThreads();
+    };
+
+    window.addEventListener('refresh-threads', handleRefresh);
+    
+    // Listen to real-time webhook events
+    const evtSource = new EventSource('/api/events');
+    evtSource.onmessage = (event) => {
+      if (event.data === 'refresh') {
+        loadThreads();
+      }
+    };
+
+    return () => {
+      window.removeEventListener('refresh-threads', handleRefresh);
+      evtSource.close();
+    };
   }, []);
 
   // Update local read/unread status when a thread is selected

@@ -13,6 +13,8 @@
     "@corsair-dev/github": "^0.1.10",
     "@corsair-dev/gmail": "^0.1.4",
     "@corsair-dev/googlecalendar": "^0.1.4",
+    "@corsair-dev/mcp": "^0.1.22",
+    "@openai/agents": "^0.11.6",
     "@tabler/icons-react": "^3.44.0",
     "ai": "^6.0.203",
     "corsair": "^0.1.75",

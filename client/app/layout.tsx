@@ -8,8 +8,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`dark ${GeistSans.variable}`}>
-      <body className="bg-base text-primary font-sans antialiased">
+    <html lang="en" className={`dark ${GeistSans.variable}`} suppressHydrationWarning>
+      <body className="bg-base text-primary font-sans antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>

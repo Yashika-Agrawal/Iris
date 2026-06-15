@@ -12,12 +12,16 @@ export function ComposeModal() {
 
   useEffect(() => {
     const handleOpenCompose = () => setIsOpen(true);
-    const handleOpenReply = () => {
+    const handleOpenReply = (e: any) => {
       setIsOpen(true);
+      if (e.detail) {
+        if (e.detail.to) setTo(e.detail.to);
+        if (e.detail.subject) setSubject(e.detail.subject.startsWith('Re:') ? e.detail.subject : `Re: ${e.detail.subject}`);
+      }
     };
 
     window.addEventListener('open-compose', handleOpenCompose);
-    window.addEventListener('open-reply', handleOpenReply);
+    window.addEventListener('open-reply', handleOpenReply as any);
 
     return () => {
       window.removeEventListener('open-compose', handleOpenCompose);

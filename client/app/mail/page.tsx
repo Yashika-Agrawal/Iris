@@ -1,24 +1,28 @@
 'use client';
 import { FocusStack } from '../../components/mail/FocusStack';
 import { useFocusStack } from '../../lib/hooks/useFocusStack';
+import { Loader } from '../../components/ui/Loader';
 
 export default function MailPage() {
-  const { items, isLoading } = useFocusStack();
+  const { items, isLoading, hasGenerated, generateStack } = useFocusStack();
 
   if (isLoading) {
+    return <Loader label="Iris is synthesizing..." sublabel="Analyzing Inbox & Calendar" />;
+  }
+
+  if (!hasGenerated) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-6 bg-base">
-        <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-t-2 border-accent-blue animate-spin w-12 h-12 m-auto opacity-70"></div>
-          <div className="absolute inset-0 rounded-full border-r-2 border-accent-blue animate-spin w-12 h-12 m-auto opacity-40" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-          <div className="w-3 h-3 bg-accent-blue rounded-full shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-pulse"></div>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-primary text-sm font-semibold tracking-wide">Iris is synthesizing...</div>
-          <div className="text-secondary text-xs font-mono tracking-widest uppercase animate-pulse">
-            Analyzing Inbox & Calendar
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+        <h2 className="text-xl font-bold text-primary">Your Focus Stack</h2>
+        <p className="text-secondary max-w-sm">
+          Click below to let Iris analyze your inbox and calendar to identify your highest priorities.
+        </p>
+        <button
+          onClick={generateStack}
+          className="px-4 py-2 mt-2 bg-accent-blue text-white rounded-md font-semibold hover:bg-opacity-90 transition-opacity"
+        >
+          Synthesize Priorities
+        </button>
       </div>
     );
   }
