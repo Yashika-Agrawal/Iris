@@ -109,7 +109,8 @@ export default function BriefingPage() {
     fetch('/api/briefing')
       .then(async res => {
         if (!res.ok) {
-          throw new Error(`API Error: ${res.statusText}`);
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `API Error: ${res.statusText}`);
         }
         return res.json();
       })
@@ -158,7 +159,17 @@ export default function BriefingPage() {
   };
 
   if (loading) {
-    return <Loader label="Iris is synthesizing..." sublabel="ANALYZING INBOX & CALENDAR" />;
+    return (
+      <AppShell
+        nav={<NavRail />}
+        sidebar={<BriefingSidebar initialCommitments={[]} hasGenerated={hasGenerated} />}
+        main={
+          <div className="flex flex-col items-center justify-center h-full">
+            <Loader label="Iris is synthesizing..." sublabel="ANALYZING INBOX & CALENDAR" />
+          </div>
+        }
+      />
+    );
   }
 
   if (error && !hasGenerated) {
@@ -214,7 +225,7 @@ export default function BriefingPage() {
   return (
     <AppShell
       nav={<NavRail />}
-      sidebar={<BriefingSidebar initialCommitments={data?.commitments || []} />}
+      sidebar={<BriefingSidebar initialCommitments={data?.commitments || []} hasGenerated={true} />}
       main={
         <div className="h-full bg-base overflow-y-auto p-8 text-primary max-w-3xl mx-auto flex flex-col gap-8">
           {/* Header */}
@@ -255,7 +266,12 @@ export default function BriefingPage() {
           <div className="flex flex-col gap-4">
             <h2 className="text-sm font-semibold tracking-tight">Today's Priorities</h2>
             <div className="flex flex-col gap-3">
-              {actions.map((act) => {
+              {actions.length === 0 ? (
+                <div className="p-4 rounded-lg bg-surface border border-dashed border-border text-center opacity-60">
+                  <span className="text-xs text-muted">No priorities or actions surfaced for today.</span>
+                </div>
+              ) : (
+                actions.map((act) => {
                 const isCompleted = completedActions[act.id];
                 if (isCompleted) {
                   return (
@@ -306,7 +322,7 @@ export default function BriefingPage() {
                     </div>
                   </div>
                 );
-              })}
+              }))}
             </div>
           </div>
         </div>

@@ -11,17 +11,21 @@ export function useFocusStack() {
     setIsLoading(true);
     let timeoutId: NodeJS.Timeout | undefined;
     try {
+      // Use a 15-second timeout to prevent infinite loading on slow webhooks
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 15000);
+
       // 1. Fetch threads and events
-      const threadsRes = await fetch('/api/gmail/threads');
-      const eventsRes = await fetch(`/api/calendar/events?from=${encodeURIComponent(new Date().toISOString())}`);
+      const threadsRes = await fetch('/api/gmail/threads', { signal: controller.signal }).catch(() => null);
+      const eventsRes = await fetch(`/api/calendar/events?from=${encodeURIComponent(new Date().toISOString())}`, { signal: controller.signal }).catch(() => null);
       
       let threads: Thread[] = [];
       let events: CalEvent[] = [];
 
-      if (threadsRes.ok) {
+      if (threadsRes && threadsRes.ok) {
         threads = await threadsRes.json();
       }
-      if (eventsRes.ok) {
+      if (eventsRes && eventsRes.ok) {
         events = await eventsRes.json();
       }
 
@@ -79,10 +83,6 @@ export function useFocusStack() {
 
       Do not output any markdown code blocks or wrapping. Output ONLY the JSON array.
       `;
-
-      // Use a 5-second timeout so the UI doesn't hang forever without an API key
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const agentRes = await fetch('/api/agent', {
         method: 'POST',

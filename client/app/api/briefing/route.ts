@@ -35,12 +35,14 @@ export async function GET() {
     const agent = new Agent({
       name: 'corsair-briefing-agent',
       model: 'gpt-4o-mini', // Switched to mini to save 95% on token costs!
-      instructions: `You are an executive assistant. Your job is to analyze the user's recent activity to synthesize a daily briefing.
-      CRITICAL: To save tokens and avoid context limits, you MUST:
-      1. Only fetch a maximum of the 10 most recent unread emails.
-      2. Only fetch calendar events for TODAY.
+      instructions: `You are an executive assistant summarizing activity. 
+      You have tools like list_operations, get_schema, and run_script. 
+      1. Fetch emails and calendar events. If you don't know the operation name, use list_operations once.
+      2. If an operation fails or returns no data, DO NOT RETRY.
+      3. DO NOT get stuck in a loop.
       
-      You must output EXACTLY a valid JSON object matching this TypeScript interface, and nothing else:
+      CRITICAL: Even if the API fails entirely or you cannot fetch data, YOU MUST STILL OUTPUT THE JSON OBJECT EXACTLY. Just fill the numbers with 0 and use empty arrays [].
+      UNDER NO CIRCUMSTANCES should you output plain text or apologies like "I cannot fetch". YOU MUST ONLY OUTPUT JSON matching this TypeScript interface:
       {
         "stats": { "urgentEmailsCount": number, "meetingsCount": number, "conflictsCount": number, "followupsCount": number },
         "actions": [{ "id": string, "title": string, "summary": string, "source": "email" | "calendar", "urgency": "high" | "medium" | "low", "impact": "critical" | "normal", "actionLabel": string }],
@@ -51,19 +53,25 @@ export async function GET() {
 
     const result = await run(agent, "Generate my daily briefing JSON.");
     
-    // Attempt to parse the LLM's raw JSON output
     let parsedData;
     try {
-      const cleanedOutput = result.finalOutput.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedOutput);
-    } catch (e) {
+      // Find the first '{' and the last '}' to extract the JSON object
+      const startIdx = result.finalOutput.indexOf('{');
+      const endIdx = result.finalOutput.lastIndexOf('}');
+      if (startIdx === -1 || endIdx === -1) {
+        throw new Error(`No JSON braces found in LLM output.`);
+      }
+      const jsonString = result.finalOutput.substring(startIdx, endIdx + 1);
+      parsedData = JSON.parse(jsonString);
+    } catch (e: any) {
       console.error("Failed to parse LLM JSON:", result.finalOutput);
-      throw new Error("Invalid JSON from LLM");
+      const rawSnippet = result.finalOutput ? result.finalOutput.substring(0, 150) : 'empty';
+      throw new Error(`Invalid JSON: ${e.message} | Raw LLM Output: ${rawSnippet}...`);
     }
 
     return NextResponse.json(parsedData);
   } catch (error) {
     console.error('Error in briefing route:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal Server Error' }, { status: 500 });
   }
 }
