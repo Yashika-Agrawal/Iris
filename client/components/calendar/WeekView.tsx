@@ -90,9 +90,9 @@ export function WeekView() {
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-8 min-w-[800px] h-[1440px] relative">
           {/* Time axis */}
-          <div className="col-span-1 border-r border-border relative">
+          <div className="col-span-1 border-r border-border relative pt-3">
             {hours.map(h => (
-              <div key={h} className="absolute w-full border-b border-border/50 text-xs text-muted text-right pr-2" style={{ top: `${h * 60}px`, height: '60px' }}>
+              <div key={h} className="absolute w-full text-xs text-muted text-right pr-2 -translate-y-1/2" style={{ top: `${h * 60}px` }}>
                 {h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`}
               </div>
             ))}
@@ -107,7 +107,7 @@ export function WeekView() {
               </div>
               <div className="relative h-[1440px]">
                 {hours.map(h => (
-                  <div key={h} className="absolute w-full border-b border-border/20" style={{ top: `${h * 60}px`, height: '60px' }} />
+                  <div key={h} className="absolute w-full border-t border-border/20" style={{ top: `${h * 60}px` }} />
                 ))}
                 
                 {(() => {

@@ -52,133 +52,58 @@ export async function POST(req: Request) {
       throw new Error('@corsair-dev/mcp or @openai/agents is not installed correctly.');
     }
 
+    const tenantId = await getTenantId();
     const provider = new OpenAIAgentsProvider();
-    const tools = await provider.build({ corsair, tool });
+    const tools = provider.build({ 
+      corsair, 
+      tool, 
+      tenantId: tenantId 
+    });
 
-    tools.push(tool({
-      name: 'send_email_simple',
-      description: 'Easily send an email without base64 encoding. ALWAYS use this instead of the gmail plugin.',
-      parameters: z.object({
-        to: z.string(),
-        subject: z.string(),
-        body: z.string()
-      }),
-      execute: async ({ to, subject, body }: any) => {
-        try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const str = `To: ${to}\r\nSubject: ${subject}\r\n\r\n${body}`;
-          const rawEncoded = Buffer.from(str).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-          const res = await tenant.gmail.api.messages.send({ userId: 'me', raw: rawEncoded });
-          return `Email sent successfully! ID: ${res.id}`;
-        } catch (err: any) {
-          return `Failed to send email: ${err.message}`;
-        }
-      }
-    }));
-
-    tools.push(tool({
-      name: 'schedule_meeting_simple',
-      description: 'Easily schedule a calendar event. ALWAYS use this instead of the googlecalendar plugin.',
-      parameters: z.object({
-        summary: z.string(),
-        description: z.string().optional(),
-        startIso: z.string().describe('ISO string for start time'),
-        endIso: z.string().describe('ISO string for end time'),
-        attendeeEmails: z.array(z.string()).optional()
-      }),
-      execute: async ({ summary, description, startIso, endIso, attendeeEmails }: any) => {
-        try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const attendees = attendeeEmails ? attendeeEmails.map((email: string) => ({ email })) : undefined;
-          
-          const res = await tenant.googlecalendar.api.events.create({
-            calendarId: 'primary',
-            event: {
-              summary,
-              description,
-              start: { dateTime: startIso },
-              end: { dateTime: endIso },
-              attendees
-            }
-          });
-          return `Meeting scheduled successfully! Link: ${res.htmlLink}`;
-        } catch (err: any) {
-          return `Failed to schedule meeting: ${err.message}`;
-        }
-      }
-    }));
-
-    tools.push(tool({
-      name: 'search_emails',
-      description: 'Search the users emails. ALWAYS use this instead of the gmail plugin to read emails.',
-      parameters: z.object({ query: z.string().optional().describe('Gmail search query, e.g. "from:yashika" or "is:unread"') }),
-      execute: async ({ query }: any) => {
-        try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const res = await tenant.gmail.api.threads.list({ userId: 'me', q: query, maxResults: 5 });
-          if (!res.threads || res.threads.length === 0) return "No emails found.";
-          const snippets = await Promise.all(res.threads.map(async (t: any) => {
-             try {
-                const full = await tenant.gmail.api.threads.get({ userId: 'me', id: t.id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] });
-                const subject = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='Subject')?.value || 'No Subject';
-                const from = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='From')?.value || 'Unknown';
-                const date = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='Date')?.value || 'Unknown Date';
-                return `From: ${from} | Subject: ${subject} | Date: ${date} | Preview: ${t.snippet}`;
-             } catch (e) { return `Preview: ${t.snippet}`; }
-          }));
-          return snippets.join('\n---\n');
-        } catch (err: any) {
-          return `Failed to search emails: ${err.message}`;
-        }
-      }
-    }));
-
-    tools.push(tool({
-      name: 'list_calendar_events',
-      description: 'List calendar events in a time range. ALWAYS use this instead of the googlecalendar plugin to read events.',
-      parameters: z.object({
-        timeMinIso: z.string().describe('ISO start time'),
-        timeMaxIso: z.string().describe('ISO end time')
-      }),
-      execute: async ({ timeMinIso, timeMaxIso }: any) => {
-        try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const res = await tenant.googlecalendar.api.events.getMany({
-            calendarId: 'primary',
-            timeMin: timeMinIso,
-            timeMax: timeMaxIso,
-            singleEvents: true,
-            orderBy: 'startTime',
-            maxResults: 10
-          });
-          if (!res.items || res.items.length === 0) return "No events found.";
-          return res.items.map((e: any) => `Event: ${e.summary} | Start: ${e.start?.dateTime || e.start?.date} | End: ${e.end?.dateTime || e.end?.date} | Status: ${e.status}`).join('\n');
-        } catch (err: any) {
-          return `Failed to list events: ${err.message}`;
-        }
-      }
-    }));
-
-    const agent = new Agent({
+      const currentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+      
+      const agent = new Agent({
       name: 'corsair-agent',
       model: 'gpt-4o-mini', // Changed to mini to save tokens
       instructions: `You are Iris, a highly capable AI assistant using Corsair tools.
-      You MUST use 'run_script' to perform actions.
+      You MUST use the provided tools to fulfill the user's requests.
       
-      HINTS:
-      - ALWAYS use 'send_email_simple' to send emails.
-      - ALWAYS use 'schedule_meeting_simple' to schedule calendar events.
-      - ALWAYS use 'search_emails' to read or search emails.
-      - ALWAYS use 'list_calendar_events' to read calendar events.
+      CRITICAL TIMEZONE CONTEXT:
+      The user's current local time is ${currentTime} (Asia/Kolkata timezone). 
+      You MUST use this timezone context when interpreting relative times (e.g., "today", "tomorrow", "3 PM") and ensure all ISO strings generated for Calendar events reflect this correct timezone offset!
       
-      CRITICAL LOOP PREVENTION:
-      If you do not know the exact schema for an operation, you MUST use 'get_schema' first.
-      If 'run_script' fails, DO NOT RETRY the exact same arguments. Try to fix the arguments based on the error.
-      If 'run_script' fails TWICE for the same operation, you MUST STOP and give up. Do not get stuck in an infinite loop! Report the failure to the user.`,
+      CRITICAL INSTRUCTIONS FOR CORSAIR NATIVE TOOLS:
+      The 'run_script' tool gives you the global 'corsair' object. Because this is a multi-tenant app, you MUST bind it to the current user's tenant before using any plugins!
+      The current user's tenant ID is EXACTLY: "${tenantId}"
+      You MUST use this exact string when calling withTenant(). Do not shorten it to "default" or anything else.
+      
+      Example script to read emails:
+      try {
+        const tenant = corsair.withTenant("${tenantId}");
+        return await tenant.gmail.api.threads.list({ userId: "me" });
+      } catch (err) {
+        return "ERROR_FROM_CORSAIR: " + err.message;
+      }
+      
+      Example script to send an email:
+      try {
+        const tenant = corsair.withTenant("${tenantId}");
+        const emailStr = "To: someone@example.com\\r\\nSubject: Meeting\\r\\n\\r\\nBody text here";
+        const rawEncoded = Buffer.from(emailStr).toString('base64url');
+        return await tenant.gmail.api.messages.send({ userId: "me", raw: rawEncoded });
+      } catch (err) {
+        return "ERROR_FROM_CORSAIR: " + err.message;
+      }
+      
+      Example script to schedule an event:
+      try {
+        const tenant = corsair.withTenant("${tenantId}");
+        return await tenant.googlecalendar.api.events.create({ calendarId: "primary", event: { ... } });
+      } catch (err) {
+        return "ERROR_FROM_CORSAIR: " + err.message;
+      }
+      
+      Do not get stuck in a loop. If a tool returns 'ERROR_FROM_CORSAIR', YOU MUST explicitly quote that exact error string in your final response to the user so they can debug it!`,
       tools,
     });
 

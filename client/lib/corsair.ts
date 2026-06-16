@@ -36,6 +36,7 @@ export async function ensureIntegrationsExist() {
         gmail: {
           client_id: googleClientId,
           client_secret: googleClientSecret,
+          topic_id: process.env.GOOGLE_PUBSUB_TOPIC || '',
         },
         googlecalendar: {
           client_id: googleClientId,

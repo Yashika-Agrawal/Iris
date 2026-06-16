@@ -11,10 +11,7 @@ interface FollowUpItem {
 
 export function FollowUpTracker() {
   const [isOpen, setIsOpen] = useState(true);
-  const [followups, setFollowups] = useState<FollowUpItem[]>([
-    { id: '1', name: 'Rohan', subject: 'Re: Q3 proposal', dueIn: '18h' },
-    { id: '2', name: 'Piyush', subject: 'Re: API Integration Spec', dueIn: '2d' },
-  ]);
+  const [followups, setFollowups] = useState<FollowUpItem[]>([]);
 
   const handleCancel = (id: string) => {
     setFollowups((prev) => prev.filter((item) => item.id !== id));

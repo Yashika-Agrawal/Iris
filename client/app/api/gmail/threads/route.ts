@@ -139,33 +139,6 @@ export async function GET() {
     return NextResponse.json(formatted);
   } catch (error) {
     console.error('Error fetching threads from Google API:', error);
-    const mockThreads: Thread[] = [
-      {
-        id: 'thread-demo',
-        from: 'Piyush Garg (Mock)',
-        fromEmail: 'piyush@corsair.dev',
-        subject: 'demo confirmation',
-        preview: 'Quick rundown before we kick off...',
-        body: 'Hey Yashika,\n\nJust wanted to confirm the demo time. Let me know if that works.',
-        date: new Date().toISOString(),
-        isUnread: true,
-        priority: 'urgent',
-        responseWindow: 'reply within 2h',
-        labels: ['INBOX', 'IMPORTANT']
-      },
-      {
-        id: 'thread-followup-demo',
-        from: 'Rohan Sharma (Mock)',
-        fromEmail: 'rohan@corsair.dev',
-        subject: 'Re: Q3 proposal',
-        preview: 'Let me know what you think of the proposal...',
-        body: 'Hi Yashika,\n\nI sent over the Q3 proposal on Thursday but haven\'t heard back. Let me know if you need any changes.',
-        date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        isUnread: false,
-        priority: 'important',
-        labels: ['INBOX']
-      }
-    ];
-    return NextResponse.json(mockThreads);
+    return NextResponse.json([]);
   }
 }

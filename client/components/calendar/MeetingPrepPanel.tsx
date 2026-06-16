@@ -42,9 +42,9 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0d] border border-border rounded-lg overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-gray-950 border border-border rounded-lg overflow-hidden select-none">
       {/* Header */}
-      <div className="p-5 border-b border-border bg-[#111] flex flex-col gap-3">
+      <div className="p-5 border-b border-border bg-gray-900 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1 text-[10px] font-mono text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
             <IconCalendarEvent size={10} /> AI PREP READY
@@ -54,7 +54,7 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
           </span>
         </div>
         
-        <h2 className="text-base font-medium text-[#ddd]">{meeting.title}</h2>
+        <h2 className="text-base font-medium text-white">{meeting.title}</h2>
         
         {/* Participants */}
         <div className="flex items-center gap-2 mt-1">
@@ -82,7 +82,7 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
             <IconBulb size={14} className="text-amber-500" />
             <span>AI Executive Briefing</span>
           </div>
-          <p className="text-[12px] text-muted leading-relaxed bg-[#141414] border border-border/40 rounded-lg p-3.5 italic">
+          <p className="text-[12px] text-gray-300 leading-relaxed bg-gray-900 border border-border/40 rounded-lg p-3.5 italic">
             "{meeting.brief}"
           </p>
         </div>
@@ -112,10 +112,10 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
             <span>Key Talking Points (Interactive)</span>
           </div>
           <div className="flex flex-col gap-1.5">
-            {meeting.talkingPoints.map((point, idx) => (
+            {meeting.talkingPoints.length > 0 ? meeting.talkingPoints.map((point, idx) => (
               <label 
                 key={idx} 
-                className="flex items-start gap-3 bg-[#121212]/50 hover:bg-[#151515] border border-border/30 rounded-lg p-3 cursor-pointer transition-colors text-xs text-muted"
+                className="flex items-start gap-3 bg-gray-900 hover:bg-gray-800 border border-border/30 rounded-lg p-3 cursor-pointer transition-colors text-xs text-gray-300"
               >
                 <input 
                   type="checkbox" 
@@ -123,11 +123,15 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
                   onChange={() => togglePoint(idx)}
                   className="rounded border-border bg-transparent text-accent-blue focus:ring-accent-blue shrink-0 mt-0.5"
                 />
-                <span className={checkedPoints[idx] ? 'line-through text-muted/50' : 'text-[#bbb]'}>
+                <span className={checkedPoints[idx] ? 'line-through text-gray-500' : 'text-gray-200'}>
                   {point}
                 </span>
               </label>
-            ))}
+            )) : (
+              <div className="text-[11px] text-muted italic bg-gray-900 border border-border/30 rounded-lg p-3 text-center">
+                No key talking points generated yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -138,7 +142,7 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
             <span>Recommended Actions</span>
           </div>
           <div className="flex flex-col gap-2">
-            {meeting.actions.map((act, idx) => (
+            {meeting.actions.length > 0 ? meeting.actions.map((act, idx) => (
               <button
                 key={idx}
                 disabled={completedActions[idx]}
@@ -156,7 +160,11 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
                   <IconArrowRight size={14} className="shrink-0" />
                 )}
               </button>
-            ))}
+            )) : (
+              <div className="text-[11px] text-muted italic bg-gray-900 border border-border/30 rounded-lg p-3 text-center">
+                No recommended actions at this time.
+              </div>
+            )}
           </div>
         </div>
 
@@ -172,10 +180,10 @@ export function MeetingPrepPanel({ meeting, onActionComplete }: MeetingPrepPanel
                 <button
                   key={idx}
                   onClick={() => router.push(`/mail/${emailId}`)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-[#141414] hover:bg-[#1a1a1a] border border-border/50 transition-colors text-left text-xs"
+                  className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-900 hover:bg-gray-800 border border-border/50 transition-colors text-left text-xs"
                 >
-                  <span className="text-[#bbb] font-medium truncate">View original email context</span>
-                  <IconArrowRight size={12} className="text-muted shrink-0" />
+                  <span className="text-gray-300 font-medium truncate">View original email context</span>
+                  <IconArrowRight size={12} className="text-gray-500 shrink-0" />
                 </button>
               ))}
             </div>

@@ -3,21 +3,48 @@ import { useState } from 'react';
 import { WeekView } from '../../components/calendar/WeekView';
 import { TodayCommitments } from '../../components/calendar/TodayCommitments';
 import { MeetingPrepPanel } from '../../components/calendar/MeetingPrepPanel';
-import { mockPrepMeetings } from '../../lib/mockData';
+
 import { PrepMeeting } from '../../types';
 import { IconAlertTriangle, IconCalendar, IconCpu, IconCalendarTime, IconUsers } from '@tabler/icons-react';
 
+import { useEvents } from '../../lib/hooks/useEvents';
+
 export default function CalendarPage() {
-  const [selectedMeeting, setSelectedMeeting] = useState<PrepMeeting | null>(mockPrepMeetings[0]);
+  const weekStart = new Date();
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const { events, isLoading } = useEvents(weekStart.toISOString());
+
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(todayDate);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const todaysEvents = events.filter(ev => {
+    const evStart = new Date(ev.start);
+    return evStart >= todayDate && evStart <= endOfToday;
+  });
+
+  const dynamicPrepMeetings: PrepMeeting[] = todaysEvents.map(ev => ({
+    id: ev.id,
+    title: ev.title,
+    time: new Date(ev.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    duration: '30m',
+    participants: ev.guests ? ev.guests.map(g => ({ name: g, email: g })) : [],
+    brief: ev.description || 'No preparation data available.',
+    talkingPoints: [],
+    risks: [],
+    actions: [],
+    relatedEmailIds: []
+  }));
+
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const selectedMeeting = dynamicPrepMeetings.find(m => m.id === selectedMeetingId) || (dynamicPrepMeetings.length > 0 ? dynamicPrepMeetings[0] : null);
+
   const [activeTab, setActiveTab] = useState<'prep' | 'calendar'>('prep');
-  const [resolvedConflicts, setResolvedConflicts] = useState<Record<string, boolean>>({});
 
   const handleActionComplete = (action: string) => {
-    if (action.includes('Reschedule')) {
-      // Mark conflict resolved
-      setResolvedConflicts(prev => ({ ...prev, 'conflict-1': true }));
-      // We can also swap meeting times or show a notification
-    }
+    // actions handling
   };
 
   return (
@@ -64,58 +91,24 @@ export default function CalendarPage() {
       {activeTab === 'prep' ? (
         <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-6 p-6 overflow-hidden">
           {/* Left panel: Agenda + Conflicts */}
-          <div className="xl:col-span-1 flex flex-col gap-5 overflow-y-auto">
-            {/* Conflict Warning Banner */}
-            {!resolvedConflicts['conflict-1'] && (
-              <div className="bg-rose-950/20 border border-rose-500/30 rounded-lg p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-rose-400 font-medium text-xs font-mono">
-                  <IconAlertTriangle size={15} />
-                  <span>CONFLICT DETECTED</span>
-                </div>
-                <p className="text-xs text-muted leading-relaxed">
-                  You are double-booked at <strong className="text-primary">2:00 PM today</strong>:
-                </p>
-                <div className="flex flex-col gap-1.5 text-[11px] font-mono text-secondary pl-1.5 border-l border-rose-500/20">
-                  <div>• Q3 Spec Review (Piyush)</div>
-                  <div>• Client Sync (DigitalOcean)</div>
-                </div>
-                <button
-                  onClick={() => {
-                    handleActionComplete('Reschedule meeting to 3 PM');
-                  }}
-                  className="w-full mt-1.5 py-1.5 text-center text-[10px] font-mono font-bold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded transition-colors"
-                >
-                  RESOLVE: RESCHEDULE SPEC REVIEW TO 3 PM
-                </button>
-              </div>
-            )}
-
-            {resolvedConflicts['conflict-1'] && (
-              <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-lg p-4 flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-medium text-xs font-mono">
-                  <IconCalendarTime size={15} />
-                  <span>CONFLICT RESOLVED</span>
-                </div>
-                <p className="text-xs text-muted leading-relaxed">
-                  Spec Review has been rescheduled to 3:00 PM. Calendar has been updated.
-                </p>
-              </div>
-            )}
-
+          <div className="xl:col-span-1 flex flex-col gap-5 overflow-hidden">
             {/* List of Prep Meetings */}
-            <div className="flex flex-col gap-3">
-              <span className="text-[10px] font-mono font-medium text-muted uppercase tracking-wider">
+            <div className="flex flex-col gap-3 overflow-hidden">
+              <span className="text-[10px] font-mono font-medium text-muted uppercase tracking-wider shrink-0">
                 TODAY'S PREP WORKSPACE
               </span>
-              <div className="flex flex-col gap-2.5">
-                {mockPrepMeetings.map((meet) => {
+              <div className="flex flex-col gap-2.5 overflow-y-auto pr-1">
+                {isLoading ? (
+                  <div className="text-xs text-muted font-mono p-4">Loading meetings...</div>
+                ) : dynamicPrepMeetings.length === 0 ? (
+                  <div className="text-xs text-muted font-mono p-4">No meetings scheduled for today.</div>
+                ) : dynamicPrepMeetings.map((meet) => {
                   const isSelected = selectedMeeting?.id === meet.id;
-                  const hasConflict = !resolvedConflicts['conflict-1'] && meet.time === '2:00 PM';
                   return (
                     <button
                       key={meet.id}
-                      onClick={() => setSelectedMeeting(meet)}
-                      className={`w-full text-left p-3.5 border rounded-lg transition-all flex flex-col gap-2 ${
+                      onClick={() => setSelectedMeetingId(meet.id)}
+                      className={`w-full text-left p-3.5 border rounded-lg transition-all flex flex-col gap-2 shrink-0 ${
                         isSelected
                           ? 'bg-[#141414] border-accent-blue'
                           : 'bg-surface hover:bg-[#141414] border-border hover:border-border-strong'
@@ -138,11 +131,6 @@ export default function CalendarPage() {
                         <span className="text-[10px] text-muted flex items-center gap-1">
                           <IconUsers size={12} /> {meet.participants.length} guests
                         </span>
-                        {hasConflict && (
-                          <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                            Conflict
-                          </span>
-                        )}
                       </div>
                     </button>
                   );
@@ -150,7 +138,9 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <TodayCommitments />
+            <div className="shrink-0 pt-2 border-t border-border">
+              <TodayCommitments />
+            </div>
           </div>
 
           {/* Right/Center panel: The deep-dive Prep detail */}
