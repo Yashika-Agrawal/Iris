@@ -20,8 +20,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    const tenant = corsair.withTenant(tenantId);
     // Fetch the thread context from Corsair
-    const thread = await corsair.plugins.gmail.api.threads.getThread({ id: params.id }, { tenantId });
+    const thread = await tenant.gmail.api.threads.get({ id: params.id, userId: 'me', format: 'full' });
     
     // Extract text snippets from the messages to give the LLM context
     const messagesText = thread.messages?.map((m: any) => m.snippet || '').join('\n') || '';

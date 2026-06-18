@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-export const dynamic = 'force-dynamic';
 import { corsair, pool } from '../../../../lib/corsair';
 import { getTenantId } from '../../../../lib/tenant';
 import { Thread, Priority } from '../../../../types';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
