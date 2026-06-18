@@ -13,12 +13,11 @@ export async function POST(req: Request) {
 
     // Call Corsair's processWebhook function exactly as shown in the video
     try {
-      await processWebhook({
+      await processWebhook(
         corsair,
         headers,
-        body,
-        tenantId
-      });
+        body
+      );
     } catch (e) {
       console.error('processWebhook error:', e);
     }
