@@ -69,7 +69,7 @@ function SettingsContent() {
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight mb-1">Settings</h1>
-          <p className="text-xs text-secondary font-mono">Scope: Multi-tenant client configuration</p>
+          <p className="text-xs text-secondary font-mono">Manage your integrations and account configuration.</p>
         </div>
         <Link 
           href="/mail" 
@@ -87,29 +87,7 @@ function SettingsContent() {
         </div>
       )}
 
-      {/* Tenant Context Panel */}
-      <div className="p-5 rounded-lg border border-border bg-surface flex flex-col gap-4">
-        <div>
-          <h2 className="text-sm font-semibold mb-1">Active Tenant ID</h2>
-          <p className="text-xs text-secondary">
-            Switching the tenant ID swaps the database and API context. All email and calendar data will be scoped to this user.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            className="flex-1 px-3 py-2 bg-elevated border border-border rounded text-sm focus:outline-none focus:border-border-strong font-mono"
-            value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-          />
-          <button
-            onClick={() => handleSwitchTenant(tenantId)}
-            className="px-4 py-2 bg-elevated hover:bg-border-strong border border-border rounded text-xs font-mono transition"
-          >
-            Apply Tenant
-          </button>
-        </div>
-      </div>
+
 
       {/* Integrations Cards */}
       <div className="flex flex-col gap-4">
@@ -127,7 +105,7 @@ function SettingsContent() {
               )}
             </div>
             <p className="text-xs text-secondary max-w-md">
-              Allow Iris to fetch, classify, and draft responses for email threads scoped to <strong>{tenantId}</strong>.
+              Allow Iris to fetch, classify, and draft responses for your email threads automatically.
             </p>
           </div>
           <div>
@@ -152,7 +130,7 @@ function SettingsContent() {
               )}
             </div>
             <p className="text-xs text-secondary max-w-md">
-              Allow Iris to schedule meetings and check availability scoped to <strong>{tenantId}</strong>.
+              Allow Iris to schedule meetings and check availability on your Google Calendar.
             </p>
           </div>
           <div>

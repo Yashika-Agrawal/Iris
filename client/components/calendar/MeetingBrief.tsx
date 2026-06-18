@@ -66,15 +66,6 @@ export function MeetingBrief({ event, thread, isVisible, onDismiss }: MeetingBri
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono text-muted uppercase tracking-wider">
-              OPEN ACTION ITEMS
-            </span>
-            <ul className="list-disc list-inside text-secondary pl-1 flex flex-col gap-1">
-              <li>Share updated deck ← from last meeting thread</li>
-            </ul>
-          </div>
-
           <div className="flex items-center gap-3 mt-1.5">
             {thread && (
               <button

@@ -73,7 +73,7 @@ export function AppShell({ nav, sidebar, main }: AppShellProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.98 }}
                   transition={{ type: 'spring', damping: 20, stiffness: 150 }}
-                  className="bg-[#0b0b0c]/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl max-h-[350px] overflow-y-auto mb-2 flex flex-col"
+                  className="bg-surface/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl max-h-[350px] overflow-y-auto mb-2 flex flex-col"
                 >
                   <div className="flex justify-between items-center px-4 py-2 border-b border-border/60 bg-elevated/40 sticky top-0 backdrop-blur-md z-10">
                     <span className="text-[10px] font-mono text-secondary flex items-center gap-1.5 font-semibold">
@@ -96,7 +96,7 @@ export function AppShell({ nav, sidebar, main }: AppShellProps) {
             </AnimatePresence>
 
             {/* Chatbox Input Container */}
-            <div className="relative flex items-center bg-[#141416] border border-border hover:border-border-strong focus-within:border-accent-blue/70 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.15)] rounded-2xl p-2.5 transition-all w-full">
+            <div className="relative flex items-center bg-surface border border-border hover:border-border-strong focus-within:border-accent-blue/70 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.15)] rounded-2xl p-2.5 transition-all w-full">
               {/* Sparkle icon indicator */}
               <div className="pl-2.5 pr-2 text-muted">
                 <IconSparkles size={16} className={isStreaming ? "text-accent-blue animate-spin" : "text-muted"} />

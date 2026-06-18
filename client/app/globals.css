@@ -14,12 +14,12 @@
   --font-mono: var(--font-mono);
   
   --color-base: #0a0a0a;
-  --color-surface: #0d0d0d;
-  --color-elevated: #141414;
-  --color-border: #1a1a1a;
-  --color-border-strong: #2a2a2a;
-  --color-muted: #444444;
-  --color-secondary: #666666;
+  --color-surface: #0f0f13;
+  --color-elevated: #18181b;
+  --color-border: #27272a;
+  --color-border-strong: #3f3f46;
+  --color-muted: #71717a;
+  --color-secondary: #a1a1aa;
   --color-primary: #e5e5e5;
   --color-accent-blue: #3b82f6;
   --color-accent-green: #10b981;

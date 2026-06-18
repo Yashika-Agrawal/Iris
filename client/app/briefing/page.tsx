@@ -27,13 +27,13 @@ function BriefingSidebar({ initialCommitments = [], hasGenerated = false }: { in
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1">
         {!hasGenerated ? (
-          <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-surface/50 opacity-60">
+          <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-surface">
             <IconMail size={24} className="text-muted mb-2" />
             <p className="text-xs text-secondary font-semibold">Waiting for Synthesis</p>
             <p className="text-[10px] text-muted mt-1">Click Synthesize to analyze emails for commitments.</p>
           </div>
         ) : commitments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-surface/50 opacity-60">
+          <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-surface">
             <IconCheck size={24} className="text-accent-green mb-2" />
             <p className="text-xs text-secondary font-semibold">No Active Commitments</p>
             <p className="text-[10px] text-muted mt-1">You have no outstanding promises to follow up on.</p>

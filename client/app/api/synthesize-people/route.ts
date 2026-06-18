@@ -40,7 +40,7 @@ export async function POST(req: Request) {
           id: z.string(),
           name: z.string(),
           email: z.string(),
-          avatar: z.string().optional(),
+          avatar: z.string().nullable(),
           lastContact: z.string(),
           openQuestions: z.array(z.string()),
           pendingFollowups: z.number(),
