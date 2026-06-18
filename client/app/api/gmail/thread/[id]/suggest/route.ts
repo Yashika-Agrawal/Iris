@@ -5,7 +5,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { corsair } from '../../../../../../lib/corsair';
 import { getTenantId } from '../../../../../../lib/tenant';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const tenantId = await getTenantId();
     if (!tenantId) {
@@ -16,13 +16,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       throw new Error("Missing OPENAI_API_KEY");
     }
 
+    const resolvedParams = await params;
+
     const openai = createOpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
     const tenant = corsair.withTenant(tenantId);
     // Fetch the thread context from Corsair
-    const thread = await tenant.gmail.api.threads.get({ id: params.id, userId: 'me', format: 'full' });
+    const thread = await tenant.gmail.api.threads.get({ id: resolvedParams.id, userId: 'me', format: 'full' });
     
     // Extract text snippets from the messages to give the LLM context
     const messagesText = thread.messages?.map((m: any) => m.snippet || '').join('\n') || '';
