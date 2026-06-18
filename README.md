@@ -43,9 +43,16 @@ pnpm install
 
 3. Create a `.env.local` file in the `client` directory and add your keys:
 ```env
-# Corsair API Configuration
-CORSAIR_PROJECT_ID=your_project_id
-CORSAIR_API_KEY=your_corsair_api_key
+# Database & Encryption
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+CORSAIR_KEK=your_32_byte_base64_encryption_key
+
+# Google OAuth Credentials
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # OpenAI
 OPENAI_API_KEY=sk-your_openai_api_key
