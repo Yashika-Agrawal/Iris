@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useThread } from '../../../lib/hooks/useThread';
 import { useParams, useRouter } from 'next/navigation';
 import { IconArrowUp, IconSparkles, IconArchive, IconClock, IconTrash, IconCornerUpLeft, IconDots } from '@tabler/icons-react';
@@ -12,6 +12,24 @@ export default function ThreadPage() {
   const threadId = params?.threadId as string;
   const { thread, isLoading, messages = [] } = useThread(threadId);
   const [prompt, setPrompt] = useState('');
+  
+  const [suggestedActions, setSuggestedActions] = useState<string[]>(['Summarise Inbox', 'Draft a reply']);
+  const [isFetchingActions, setIsFetchingActions] = useState(false);
+
+  // Fetch AI suggested actions
+  useEffect(() => {
+    if (!threadId) return;
+    setIsFetchingActions(true);
+    fetch(`/api/gmail/thread/${threadId}/suggest`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.actions && data.actions.length > 0) {
+          setSuggestedActions(data.actions);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsFetchingActions(false));
+  }, [threadId]);
   
   const [isScheduling, setIsScheduling] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -120,14 +138,20 @@ export default function ThreadPage() {
             </div>
             
             <div className="flex items-center flex-wrap gap-2">
-              {['Confirm demo at 11am', 'Book a meeting', 'Follow up with Rohan', 'Summarise Inbox'].map((chip, idx) => (
-                <button 
-                  key={idx}
-                  className="px-3 py-1.5 bg-surface border border-border hover:border-[#333] hover:bg-elevated text-secondary hover:text-primary rounded-full text-[11px] transition-colors whitespace-nowrap cursor-pointer"
-                >
-                  {chip}
-                </button>
-              ))}
+              {isFetchingActions ? (
+                <div className="text-xs text-muted flex items-center gap-2">
+                  <IconSparkles size={12} className="animate-pulse" /> Generating actions...
+                </div>
+              ) : (
+                suggestedActions.map((chip, idx) => (
+                  <button 
+                    key={idx}
+                    className="px-3 py-1.5 bg-surface border border-border hover:border-[#333] hover:bg-elevated text-secondary hover:text-primary rounded-full text-[11px] transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    {chip}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>

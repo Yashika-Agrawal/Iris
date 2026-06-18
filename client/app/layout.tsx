@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font/sans';
 import { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Corsair Hackathon',
+  title: 'Iris',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
