@@ -13,7 +13,7 @@ export const db = drizzle(pool);
 export const corsair = createCorsair({
     plugins: [
       github(), 
-      gmail({ topicId: process.env.GOOGLE_PUBSUB_TOPIC }), 
+      gmail(), 
       googlecalendar()
     ],
     database: pool,
