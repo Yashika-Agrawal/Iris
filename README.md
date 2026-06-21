@@ -11,6 +11,11 @@ Iris is an AI-first Executive Assistant that turns your live Gmail and Google Ca
 - **📅 Meeting Prep Intelligence:** Prepares you for upcoming meetings by pulling relevant emails, surfacing unresolved commitments, and generating a snapshot of your relationship with the participants.
 - **🧠 Follow-up AI / Relationship Intelligence:** Analyzes your communication patterns to track who you interact with the most, calculating when you last spoke and finding pending commitments.
 - **💬 AI Command Center:** A ChatGPT-style floating command palette that allows you to query your live data and execute commands (e.g. "Draft a reply to Rohan", "Do I have any conflicts today?").
+<img width="1913" height="921" alt="image" src="https://github.com/user-attachments/assets/1a62826f-848f-40d4-a055-33eb9b047aa9" />
+
+<img width="1915" height="913" alt="image" src="https://github.com/user-attachments/assets/0a76be68-506d-4ac1-908f-6c958ce0347e" />
+
+
 
 ## 🛠️ Tech Stack
 
