@@ -72,34 +72,6 @@ export function CommandBar() {
       icon: <IconCalendar size={16} className="text-secondary" />,
       action: () => { router.push('/calendar'); setIsOpen(false); }
     },
-    {
-      id: 'act-resched',
-      category: 'Actions',
-      label: 'Resolve Double-booking Conflict (Move spec review to 3 PM)',
-      icon: <IconCalendar size={16} className="text-accent-red" />,
-      action: () => { router.push('/briefing'); setIsOpen(false); }
-    },
-    {
-      id: 'act-reply-piyush',
-      category: 'AI Chief of Staff',
-      label: 'Draft reply to Piyush: Reschedule Confirm',
-      icon: <IconSparkles size={16} className="text-accent-orange" />,
-      action: () => { router.push('/mail/thread-2'); setIsOpen(false); }
-    },
-    {
-      id: 'act-review-board',
-      category: 'AI Chief of Staff',
-      label: 'Review Q3 Board Budget Deck (Requires Action)',
-      icon: <IconMail size={16} className="text-accent-red" />,
-      action: () => { router.push('/mail/thread-1'); setIsOpen(false); }
-    },
-    {
-      id: 'act-coffee',
-      category: 'Actions',
-      label: 'Schedule coffee with Rahul Gupta next week',
-      icon: <IconCalendar size={16} className="text-secondary" />,
-      action: () => { router.push('/people'); setIsOpen(false); }
-    }
   ];
 
   // Filter commands

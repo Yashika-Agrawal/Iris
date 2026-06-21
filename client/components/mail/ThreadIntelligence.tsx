@@ -16,17 +16,17 @@ export function ThreadIntelligence({ thread }: ThreadIntelligenceProps) {
   const [isSent, setIsSent] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Derive mock details from thread
+  // Derive details from thread
   const aiSummary = thread 
-    ? `Confirming the demo time and checking if you can share the latest deck details.`
+    ? thread.preview || 'No summary available.'
     : '';
 
   const threadHistory = thread
-    ? `Piyush sent an invitation for the demo. This is the first message in the thread.`
+    ? `This is a conversation regarding: ${thread.subject || 'the email thread'}.`
     : '';
 
   const initialDraft = thread
-    ? `Hi ${thread.from.split(' ')[0]},\n\nI can confirm the demo. Let me know if that works!\n\nBest,\nYashika`
+    ? `Hi ${thread.from.split(' ')[0]},\n\nThank you for reaching out.\n\nBest regards,`
     : '';
 
   useEffect(() => {

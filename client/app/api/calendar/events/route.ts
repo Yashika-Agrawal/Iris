@@ -32,24 +32,6 @@ export async function GET(request: Request) {
     return NextResponse.json(formatted);
   } catch (error) {
     console.error('Error fetching events:', error);
-    const mockEvents: CalEvent[] = [
-      {
-        id: 'event-1',
-        title: 'Mentor review',
-        start: new Date(Date.now() + 1000 * 60 * 40).toISOString(),
-        end: new Date(Date.now() + 1000 * 60 * 100).toISOString(),
-        guests: ['Piyush Garg', 'Rohan Sharma', 'Yashika Agrawal'],
-        description: 'Weekly mentor review and hackathon checkin.'
-      },
-      {
-        id: 'event-2',
-        title: 'Project Demo Pitch',
-        start: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        end: new Date(Date.now() + 1000 * 60 * 60 * 25).toISOString(),
-        guests: ['Piyush Garg', 'Yashika Agrawal'],
-        description: 'Demoing Iris to the Corsair team.'
-      }
-    ];
-    return NextResponse.json(mockEvents);
+    return NextResponse.json([]);
   }
 }

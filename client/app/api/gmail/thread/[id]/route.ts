@@ -51,58 +51,7 @@ export async function GET(
       }
     }
 
-    if (id === 'thread-demo') {
-      const thread: Thread = {
-        id: 'thread-demo',
-        from: 'Piyush Garg',
-        fromEmail: 'piyush@corsair.dev',
-        subject: 'demo confirmation',
-        preview: 'Quick rundown before we kick off...',
-        body: 'Hey Yashika,\n\nJust wanted to confirm the demo time. Let me know if that works.',
-        date: new Date().toISOString(),
-        isUnread: true,
-        priority: 'urgent',
-        responseWindow: 'reply within 2h',
-        labels: ['INBOX', 'IMPORTANT']
-      };
-      const messages: Message[] = [
-        {
-          id: 'msg-demo-1',
-          threadId: 'thread-demo',
-          from: 'Piyush Garg <piyush@corsair.dev>',
-          to: 'Yashika Agrawal <yashika@example.com>',
-          body: 'Hey Yashika,\n\nJust wanted to confirm the demo time. Let me know if that works.',
-          date: new Date().toISOString()
-        }
-      ];
-      return NextResponse.json({ thread, messages });
-    }
-
-    if (id === 'thread-followup-demo') {
-      const thread: Thread = {
-        id: 'thread-followup-demo',
-        from: 'Rohan Sharma',
-        fromEmail: 'rohan@corsair.dev',
-        subject: 'Re: Q3 proposal',
-        preview: 'Let me know what you think of the proposal...',
-        body: 'Hi Yashika,\n\nI sent over the Q3 proposal on Thursday but haven\'t heard back. Let me know if you need any changes.',
-        date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        isUnread: false,
-        priority: 'important',
-        labels: ['INBOX']
-      };
-      const messages: Message[] = [
-        {
-          id: 'msg-followup-1',
-          threadId: 'thread-followup-demo',
-          from: 'Rohan Sharma <rohan@corsair.dev>',
-          to: 'Yashika Agrawal <yashika@example.com>',
-          body: 'Hi Yashika,\n\nI sent over the Q3 proposal on Thursday but haven\'t heard back. Let me know if you need any changes.',
-          date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString()
-        }
-      ];
-      return NextResponse.json({ thread, messages });
-    }
+    // response is already fetched above
 
     // response is already fetched above
 

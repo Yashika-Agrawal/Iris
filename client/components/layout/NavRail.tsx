@@ -37,7 +37,7 @@ export function NavRail() {
         })}
       </div>
       <div className="mt-auto">
-        <Avatar initials="YA" />
+        <Avatar initials="ME" />
       </div>
     </div>
   );

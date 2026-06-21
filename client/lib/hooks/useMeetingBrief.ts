@@ -44,38 +44,6 @@ export function useMeetingBrief() {
             }
           }
         } else {
-          if (events.length === 0) {
-            const demoTimeout = setTimeout(() => {
-              const start = new Date(Date.now() + 1000 * 60 * 12);
-              const end = new Date(start.getTime() + 1000 * 60 * 60);
-              
-              setBriefEvent({
-                id: 'event-demo-brief',
-                title: 'Mentor review',
-                start: start.toISOString(),
-                end: end.toISOString(),
-                guests: ['Piyush Garg', 'Yashika Agrawal'],
-                description: 'Quick checkin on your Corsair Hackathon project progression.'
-              });
-
-              setBriefThread({
-                id: 'thread-demo-brief',
-                from: 'Piyush Garg',
-                fromEmail: 'piyush@corsair.dev',
-                subject: 'demo confirmation',
-                preview: 'Make sure your Corsair connection is live...',
-                body: 'Make sure your Corsair connection is live...',
-                date: new Date(Date.now() - 1000 * 3600 * 48).toISOString(),
-                isUnread: true,
-                priority: 'urgent',
-                responseWindow: 'reply within 2h',
-                labels: ['INBOX']
-              });
-
-              setIsVisible(true);
-            }, 8000);
-            return () => clearTimeout(demoTimeout);
-          }
         }
       } catch (err) {
         console.error('Failed checking events for brief:', err);

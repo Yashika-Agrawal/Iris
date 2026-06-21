@@ -5,10 +5,11 @@ import { Thread, Priority } from '../../../../types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const tenantId = await getTenantId();
     const tenant = corsair.withTenant(tenantId);
+    
     const response = await tenant.gmail.api.threads.list({
       userId: 'me',
       maxResults: 10,

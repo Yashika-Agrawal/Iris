@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { mockBriefingStats, mockActionItems, mockCommitments } from '../../../lib/mockData';
+
 import { corsair } from '../../../lib/corsair';
 import { getTenantId } from '../../../lib/tenant';
 import { z } from 'zod';
@@ -16,14 +16,8 @@ try {
 
 export async function GET() {
   try {
-    // MOCK MODE: Return mock data after a fake 1.5s delay
-    if (process.env.MOCK_AI === 'true' || !process.env.OPENAI_API_KEY) {
-      await new Promise(r => setTimeout(r, 1500));
-      return NextResponse.json({
-        stats: mockBriefingStats,
-        actions: mockActionItems,
-        commitments: mockCommitments
-      });
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY environment variable. Cannot generate briefing.");
     }
 
     // REAL MODE: Fetch data using @openai/agents

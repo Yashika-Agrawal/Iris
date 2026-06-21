@@ -21,30 +21,8 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
     const lastMessage = messages[messages.length - 1]?.content || 'Hello';
 
-    // MOCK MODE: Return a streaming response without using OpenAI tokens
-    if (process.env.MOCK_AI === 'true' || !process.env.OPENAI_API_KEY) {
-      const stream = new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          const chunks = [
-            "✓ Checking your calendar for Friday...\n",
-            "✓ Found slot: Friday 2pm – 2:30pm\n",
-            "✓ Drafting email to piyush@corsair.dev...\n",
-            "✓ Creating calendar event...\n",
-            "● Done! I have scheduled the meeting and sent the reply."
-          ];
-          
-          for (const chunk of chunks) {
-            controller.enqueue(encoder.encode(chunk));
-            await new Promise(r => setTimeout(r, 600)); // Simulate thinking/API latency
-          }
-          controller.close();
-        }
-      });
-      
-      return new Response(stream, {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      });
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY environment variable. Cannot run agent.");
     }
 
     // REAL MODE: Execute via @openai/agents

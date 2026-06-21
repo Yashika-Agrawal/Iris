@@ -31,7 +31,7 @@ export function FocusStack({ items: initialItems }: FocusStackProps) {
         {(() => {
           const hour = new Date().getHours();
           const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-          return <h1 className="text-2xl font-bold text-primary tracking-tight">{greeting}, Yashika.</h1>;
+          return <h1 className="text-2xl font-bold text-primary tracking-tight">{greeting}.</h1>;
         })()}
         <p className="text-sm text-secondary">
           {items.length === 0
