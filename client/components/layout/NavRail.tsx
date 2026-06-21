@@ -1,11 +1,35 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IconLayoutDashboard, IconMail, IconCalendar, IconUsers, IconSettings } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconMail, IconCalendar, IconUsers, IconSettings, IconUser, IconLogout } from '@tabler/icons-react';
 import { Avatar } from '../ui/Avatar';
 
 export function NavRail() {
   const pathname = usePathname();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.gmailConnected) {
+          setIsConnected(true);
+          setUserEmail(data.userEmail || null);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleDisconnect = async () => {
+    try {
+      await fetch('/api/auth/disconnect', { method: 'POST' });
+      window.location.reload();
+    } catch (e) {
+      console.error('Failed to disconnect', e);
+    }
+  };
 
   const links = [
     { name: 'briefing', href: '/briefing', icon: <IconLayoutDashboard size={20} />, activeMatch: (path: string) => path.startsWith('/briefing') },
@@ -15,9 +39,17 @@ export function NavRail() {
     { name: 'settings', href: '/settings', icon: <IconSettings size={20} />, activeMatch: (path: string) => path.startsWith('/settings') },
   ];
 
+  // Helper to extract 1 or 2 initials from email
+  const getInitials = (email: string) => {
+    const parts = email.split('@')[0].split(/[._-]/);
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return email.substring(0, 2).toUpperCase();
+  };
 
   return (
-    <div className="flex flex-col h-full items-center py-4 justify-between bg-base w-12 border-r border-border select-none">
+    <div className="flex flex-col h-full items-center py-4 justify-between bg-base w-14 border-r border-border select-none">
       <div className="flex flex-col gap-4 items-center w-full">
         {links.map((link) => {
           const isActive = pathname ? link.activeMatch(pathname) : false;
@@ -36,8 +68,20 @@ export function NavRail() {
           );
         })}
       </div>
-      <div className="mt-auto">
-        <Avatar initials="ME" />
+      <div className="mt-auto flex flex-col items-center gap-4">
+        {isConnected ? (
+          <button onClick={handleDisconnect} className="text-muted hover:text-accent-red transition-colors p-2" title="Disconnect Google Account">
+            <IconLogout size={18} />
+          </button>
+        ) : null}
+        
+        {isConnected && userEmail ? (
+          <Avatar initials={getInitials(userEmail)} />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-muted border border-border">
+            <IconUser size={18} />
+          </div>
+        )}
       </div>
     </div>
   );

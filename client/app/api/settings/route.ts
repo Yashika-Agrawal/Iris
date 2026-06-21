@@ -8,9 +8,14 @@ export async function GET() {
     const tenant = corsair.withTenant(tenantId);
 
     let gmailConnected = false;
+    let userEmail = null;
     try {
       const token = await tenant.gmail.keys.get_refresh_token();
-      gmailConnected = !!token;
+      if (token) {
+        gmailConnected = true;
+        const profile = await tenant.gmail.api.users.getProfile({ userId: 'me' });
+        userEmail = profile.emailAddress;
+      }
     } catch (e) {}
 
     let calendarConnected = false;
@@ -22,7 +27,8 @@ export async function GET() {
     return NextResponse.json({
       tenantId,
       gmailConnected,
-      calendarConnected
+      calendarConnected,
+      userEmail
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

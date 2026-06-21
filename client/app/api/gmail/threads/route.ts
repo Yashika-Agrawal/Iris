@@ -139,8 +139,12 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(formatted);
-  } catch (error) {
-    console.error('Error fetching threads from Google API:', error);
+  } catch (error: any) {
+    if (error.message && error.message.includes('Account not found')) {
+      // User is not connected, gracefully ignore
+    } else {
+      console.error('Error fetching threads from Google API:', error);
+    }
     return NextResponse.json([]);
   }
 }
