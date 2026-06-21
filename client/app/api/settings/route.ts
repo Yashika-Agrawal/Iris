@@ -8,10 +8,21 @@ export async function GET() {
     const tenant = corsair.withTenant(tenantId);
 
     let gmailConnected = false;
+    let userEmail = null;
     try {
       const token = await tenant.gmail.keys.get_refresh_token();
       if (token) {
         gmailConnected = true;
+        const accessToken = await tenant.gmail.keys.get_access_token();
+        if (accessToken) {
+          const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            userEmail = profile.emailAddress;
+          }
+        }
       }
     } catch (e) {}
 

@@ -1,7 +1,16 @@
+const { createCorsair } = require('corsair');
+const { gmail } = require('@corsair-dev/gmail');
 const { Pool } = require('pg');
 require('dotenv').config();
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-pool.query("SELECT config FROM corsair_accounts LIMIT 1")
-  .then(r => console.log('account config:', JSON.stringify(r.rows[0]?.config, null, 2)))
-  .catch(console.error)
-  .finally(() => pool.end());
+
+async function main() {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const corsair = createCorsair({ plugins: [gmail()], database: pool, kek: process.env.CORSAIR_KEK, multiTenancy: true });
+  const res = await pool.query("SELECT tenant_id FROM corsair_accounts LIMIT 1");
+  if(res.rows.length) {
+    const tenant = corsair.withTenant(res.rows[0].tenant_id);
+    console.log(Object.keys(tenant.gmail.keys));
+  }
+  pool.end();
+}
+main();
