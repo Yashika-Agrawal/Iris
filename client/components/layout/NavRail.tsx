@@ -7,7 +7,6 @@ import { Avatar } from '../ui/Avatar';
 
 export function NavRail() {
   const pathname = usePathname();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -16,7 +15,6 @@ export function NavRail() {
       .then(data => {
         if (data.gmailConnected) {
           setIsConnected(true);
-          setUserEmail(data.userEmail || null);
         }
       })
       .catch(console.error);
@@ -38,15 +36,6 @@ export function NavRail() {
     { name: 'calendar', href: '/calendar', icon: <IconCalendar size={20} />, activeMatch: (path: string) => path.startsWith('/calendar') },
     { name: 'settings', href: '/settings', icon: <IconSettings size={20} />, activeMatch: (path: string) => path.startsWith('/settings') },
   ];
-
-  // Helper to extract 1 or 2 initials from email
-  const getInitials = (email: string) => {
-    const parts = email.split('@')[0].split(/[._-]/);
-    if (parts.length > 1) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return email.substring(0, 2).toUpperCase();
-  };
 
   return (
     <div className="flex flex-col h-full items-center py-4 justify-between bg-base w-14 border-r border-border select-none">
@@ -75,8 +64,8 @@ export function NavRail() {
           </button>
         ) : null}
         
-        {isConnected && userEmail ? (
-          <Avatar initials={getInitials(userEmail)} />
+        {isConnected ? (
+          <Avatar initials="ME" />
         ) : (
           <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-muted border border-border">
             <IconUser size={18} />
