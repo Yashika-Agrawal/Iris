@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { corsair } from '../../../../../../lib/corsair';
 import { getTenantId } from '../../../../../../lib/tenant';
+import { DataService } from '../../../../../../lib/data-service';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,13 +22,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const tenant = corsair.withTenant(tenantId);
-    // Fetch the thread context from Corsair
-    const thread = await tenant.gmail.api.threads.get({ id: resolvedParams.id, userId: 'me', format: 'full' });
+    const service = new DataService(tenantId);
+    const result = await service.getThread(resolvedParams.id);
+    const threadData = result?.thread;
+    const messagesText = result?.messages?.map((m: any) => m.body || '').join('\n') || '';
     
-    // Extract text snippets from the messages to give the LLM context
-    const messagesText = thread.messages?.map((m: any) => m.snippet || '').join('\n') || '';
-
     const prompt = `
     Analyze the following email thread and suggest 3-4 quick, highly actionable next steps or replies I can take. 
     Keep each suggestion concise, under 6 words. (e.g. "Confirm demo at 11am", "Draft a polite decline", "Follow up next week").
