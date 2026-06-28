@@ -1,33 +1,36 @@
 import { Thread, Message } from '../../types';
 
-export async function listThreads(): Promise<Thread[]> {
-  const res = await fetch('/api/gmail/threads');
-  if (!res.ok) throw new Error('Failed to fetch threads');
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `API Error: ${res.status}`);
+  }
   return res.json();
+}
+
+export async function listThreads(): Promise<Thread[]> {
+  return apiFetch('/api/gmail/threads');
 }
 
 export async function getThread(id: string): Promise<{ thread: Thread; messages: Message[] }> {
-  const res = await fetch(`/api/gmail/thread/${id}`);
-  if (!res.ok) throw new Error('Failed to fetch thread');
-  return res.json();
+  return apiFetch(`/api/gmail/thread/${id}`);
 }
 
 export async function sendEmail(to: string, subject: string, body: string): Promise<any> {
-  const res = await fetch('/api/gmail/send', {
+  return apiFetch('/api/gmail/send', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, body }),
   });
-  if (!res.ok) throw new Error('Failed to send email');
-  return res.json();
 }
 
 export async function archiveThread(id: string): Promise<any> {
-  const res = await fetch('/api/gmail/archive', {
+  return apiFetch('/api/gmail/archive', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id }),
   });
-  if (!res.ok) throw new Error('Failed to archive thread');
-  return res.json();
 }

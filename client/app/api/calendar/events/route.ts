@@ -1,35 +1,15 @@
 import { NextResponse } from 'next/server';
-import { corsair } from '../../../../lib/corsair';
 import { getTenantId } from '../../../../lib/tenant';
-import { CalEvent } from '../../../../types';
+import { DataService } from '../../../../lib/data-service';
 
 export async function GET(request: Request) {
   try {
     const tenantId = await getTenantId();
-    const tenant = corsair.withTenant(tenantId);
+    const service = new DataService(tenantId);
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from') || new Date().toISOString();
-    
-    const response = await tenant.googlecalendar.api.events.getMany({
-      timeMin: from,
-      singleEvents: true,
-      orderBy: 'startTime'
-    });
-
-    const items = response.items || [];
-    const formatted: CalEvent[] = items.map((item: any) => {
-      const guests = item.attendees?.map((a: any) => a.email || a.displayName || '').filter(Boolean) || [];
-      return {
-        id: item.id || '',
-        title: item.summary || 'Untitled Event',
-        start: item.start?.dateTime || item.start?.date || '',
-        end: item.end?.dateTime || item.end?.date || '',
-        guests,
-        description: item.description || ''
-      };
-    });
-
-    return NextResponse.json(formatted);
+    const events = await service.getEvents(from);
+    return NextResponse.json(events);
   } catch (error: any) {
     if (error.message && error.message.includes('Account not found')) {
       // User is not connected, gracefully ignore

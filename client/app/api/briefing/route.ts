@@ -1,7 +1,8 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-
-import { corsair } from '../../../lib/corsair';
+import { corsair, pool } from '../../../lib/corsair';
 import { getTenantId } from '../../../lib/tenant';
+import { DataService } from '../../../lib/data-service';
 import { z } from 'zod';
 
 let OpenAIAgentsProvider: any;
@@ -20,9 +21,30 @@ export async function GET() {
       throw new Error("Missing OPENAI_API_KEY environment variable. Cannot generate briefing.");
     }
 
-    // REAL MODE: Fetch data using @openai/agents
     if (!OpenAIAgentsProvider) {
       throw new Error('@corsair-dev/mcp or @openai/agents is not installed correctly.');
+    }
+
+    const tenantId = await getTenantId();
+    const service = new DataService(tenantId);
+
+    const accRes = await pool.query(
+      `SELECT id FROM corsair_accounts WHERE tenant_id = $1 LIMIT 1`,
+      [tenantId]
+    );
+    const accountId = accRes.rows[0]?.id;
+
+    if (accountId) {
+      const briefRes = await pool.query(
+        `SELECT data, created_at FROM corsair_entities WHERE entity_type = 'briefing' AND entity_id = $1 LIMIT 1`,
+        [`${accountId}:briefing:daily`]
+      );
+      if (briefRes.rows.length > 0) {
+        const age = Date.now() - new Date(briefRes.rows[0].created_at).getTime();
+        if (age < 10 * 60_000) {
+          return NextResponse.json(briefRes.rows[0].data);
+        }
+      }
     }
 
     const provider = new OpenAIAgentsProvider();
@@ -34,20 +56,10 @@ export async function GET() {
       parameters: z.object({ query: z.string().optional() }),
       execute: async ({ query }: any) => {
         try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const res = await tenant.gmail.api.threads.list({ userId: 'me', q: query, maxResults: 5 });
-          if (!res.threads || res.threads.length === 0) return "No emails found.";
-          const snippets = await Promise.all(res.threads.map(async (t: any) => {
-             try {
-                const full = await tenant.gmail.api.threads.get({ userId: 'me', id: t.id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] });
-                const subject = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='Subject')?.value || 'No Subject';
-                const from = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='From')?.value || 'Unknown';
-                const date = full.messages?.[0]?.payload?.headers?.find((h:any)=>h.name==='Date')?.value || 'Unknown Date';
-                return `From: ${from} | Subject: ${subject} | Date: ${date} | Preview: ${t.snippet}`;
-             } catch (e) { return `Preview: ${t.snippet}`; }
-          }));
-          return snippets.join('\n---\n');
+          const s = new DataService(tenantId);
+          const results = await s.searchThreads(query || 'in:inbox');
+          if (results.length === 0) return "No emails found.";
+          return results.map(r => `From: ${r.from} | Subject: ${r.subject} | Date: ${r.date} | Preview: ${r.preview}`).join('\n---\n');
         } catch (err: any) {
           return `Failed to search emails: ${err.message}`;
         }
@@ -63,18 +75,10 @@ export async function GET() {
       }),
       execute: async ({ timeMinIso, timeMaxIso }: any) => {
         try {
-          const tenantId = await getTenantId();
-          const tenant = corsair.withTenant(tenantId);
-          const res = await tenant.googlecalendar.api.events.getMany({
-            calendarId: 'primary',
-            timeMin: timeMinIso,
-            timeMax: timeMaxIso,
-            singleEvents: true,
-            orderBy: 'startTime',
-            maxResults: 10
-          });
-          if (!res.items || res.items.length === 0) return "No events found.";
-          return res.items.map((e: any) => `Event: ${e.summary} | Start: ${e.start?.dateTime || e.start?.date} | End: ${e.end?.dateTime || e.end?.date} | Status: ${e.status}`).join('\n');
+          const events = await service.getEvents(timeMinIso);
+          const filtered = events.filter(e => !timeMaxIso || e.start < timeMaxIso);
+          if (filtered.length === 0) return "No events found.";
+          return filtered.map(e => `Event: ${e.title} | Start: ${e.start} | End: ${e.end}`).join('\n');
         } catch (err: any) {
           return `Failed to list events: ${err.message}`;
         }
@@ -83,7 +87,7 @@ export async function GET() {
 
     const agent = new Agent({
       name: 'corsair-briefing-agent',
-      model: 'gpt-4o-mini', // Switched to mini to save 95% on token costs!
+      model: 'gpt-4o-mini',
       instructions: `You are an executive assistant summarizing activity. 
       You have custom tools to read data. 
       1. ALWAYS use 'search_emails' to read emails.
@@ -105,7 +109,6 @@ export async function GET() {
     
     let parsedData;
     try {
-      // Find the first '{' and the last '}' to extract the JSON object
       const startIdx = result.finalOutput.indexOf('{');
       const endIdx = result.finalOutput.lastIndexOf('}');
       if (startIdx === -1 || endIdx === -1) {
@@ -117,6 +120,20 @@ export async function GET() {
       console.error("Failed to parse LLM JSON:", result.finalOutput);
       const rawSnippet = result.finalOutput ? result.finalOutput.substring(0, 150) : 'empty';
       throw new Error(`Invalid JSON: ${e.message} | Raw LLM Output: ${rawSnippet}...`);
+    }
+
+    if (accountId) {
+      try {
+        await pool.query(
+          `INSERT INTO corsair_entities (id, account_id, entity_id, entity_type, version, data, created_at, updated_at)
+           VALUES ($1, $2, $3, 'briefing', '1', $4, NOW(), NOW())
+           ON CONFLICT (entity_type, entity_id) DO UPDATE
+           SET data = $4, updated_at = NOW(), created_at = NOW()`,
+          [crypto.randomUUID(), accountId, `${accountId}:briefing:daily`, JSON.stringify(parsedData)]
+        );
+      } catch (e) {
+        console.error('Failed to cache briefing:', e);
+      }
     }
 
     return NextResponse.json(parsedData);
